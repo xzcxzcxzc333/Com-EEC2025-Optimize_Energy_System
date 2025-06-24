@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-import gccxzdr_fcn as fcn1
+import Function_Format_for_Capacity_Sizing_of_a_Solar_Storage_Charging_Energy_Park_2025_6_19 as fcn1
 
 class EnergyOptimizationPlatform(QMainWindow):
     def __init__(self):
