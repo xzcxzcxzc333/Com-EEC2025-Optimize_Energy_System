@@ -468,12 +468,12 @@ def preprocess_inputs(typical_day_avg_load, signals=None):
     if xu_user[0]+xu_user[1] > park_space*0.3*175/1000: #后续应该修改 
         xu_user[0]=park_space*0.3*175/2000
         xu_user[1]=park_space*0.3*175/2000  #光伏功率上限（园区限制）
-        print(f"直流侧和交流侧光伏上限修改为(kW kW):{xu_user[0]}、{xu_user[1]}")
+        print(f"交流侧和直流侧光伏上限修改为(kW kW):{xu_user[0]}、{xu_user[1]}")
 
     if xl_user[0]+xl_user[1] > park_space*0.3*175/1000:
         xl_user[0]=park_space*0.3*175/4000
         xl_user[1]=park_space*0.3*175/4000  #光伏功率下限（自定义，可以考虑修改）
-        print(f"直流侧和交流侧光伏下限修改为(kW kW):{xl_user[0]}、{xl_user[1]}")
+        print(f"交流侧和直流侧光伏下限修改为(kW kW):{xl_user[0]}、{xl_user[1]}")
         
     # 用户输入：典型日园区负荷均值 (单位：kW) 根据《城市电力规划规范》（GB/T50293-1999），工业用地用电指标为200-800kW/公顷。240000平方米的园区面积为24公顷，按照最低值200kW/公顷计算，负荷功率为4800kW；按照最高值800kW/公顷计算，负荷功率为19200kW。
     # typical_day_avg_load = float(input("请输入典型日园区平均每小时负荷 (kW): \n根据《城市电力规划规范》（GB/T50293-1999），工业用地用电指标为200-800kW/公顷。240000平方米的园区面积为24公顷，按照最低值200kW/公顷计算，负荷功率为4800kW；按照最高值800kW/公顷计算，负荷功率为19200kW\n"))
@@ -824,7 +824,7 @@ def run_GC_optimization():
 # while True: 这个指令交给用户决定
 # ============================================
 # function3: 显示用户选定的方案  
-def show_OG_selected_solution(num_solutions):    
+def show_GC_selected_solution(num_solutions):    
     global xl_user, xu_user, park_space, car_number
     global Delta_t
     global electricity_buy_price, electricity_sell_price, charge_price, grid_co2_factor
@@ -1353,7 +1353,8 @@ def show_OG_selected_solution(num_solutions):
             "AC_Storage_GC": os.path.join(local_base_path, "AC_Storage_GC.xlsx"),
             "AC_Load_GC": os.path.join(local_base_path, "AC_Load_GC.xlsx"),
             # "Choice_GC": os.path.join(local_base_path, "Grid_Optimization_Results.xlsx")
-        }            
+        } 
+        pv_ac_selected,pv_dc_selected,eb_ac_selected,eb_dc_selected,charger_ac_selected,charger_dc_selected = pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc           
         # 打开每个表格，添加对应容量为最后一行
         df_ac_pv = pd.read_excel(files["AC_PV_GC"])
         df_dc_pv = pd.read_excel(files["DC_PV_GC"])
