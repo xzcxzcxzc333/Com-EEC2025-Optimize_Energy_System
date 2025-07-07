@@ -551,7 +551,7 @@ def run_OG_optimization():
         pop_size=pop_size,
     )
 
-    res = minimize(
+    res_grid = minimize(
         problem,
         algorithm,
         ('n_gen', 100),
@@ -569,22 +569,22 @@ def run_OG_optimization():
     print(f"充电桩AC容量: {xl_user[4]} ~ {xu_user[4]} kW")
     print(f"充电桩DC容量: {xl_user[5]} ~ {xu_user[5]} kW")
 
-    Scatter().add(res.F).show()
+    Scatter().add(res_grid.F).show()
 
     # ============================================
     # Step8：离网模式确定光伏、充电桩容量——帕累托解集可视化
     # ============================================
     # 提取三个目标函数值
-    f1 = res.F[:, 0]  # 年化总成本
-    f2 = res.F[:, 1]  # 负荷缺电率
-    f3 = res.F[:, 2]  # 1 - 光伏消纳率
+    f1 = res_grid.F[:, 0]  # 年化总成本
+    f2 = res_grid.F[:, 1]  # 负荷缺电率
+    f3 = res_grid.F[:, 2]  # 1 - 光伏消纳率
     # 解的容量（6个决策变量）
-    pv_ac     = res.X[:, 0]
-    pv_dc     = res.X[:, 1]
-    eb_ac     = res.X[:, 2]
-    eb_dc     = res.X[:, 3]
-    charger_ac = res.X[:, 4]
-    charger_dc = res.X[:, 5]
+    pv_ac     = res_grid.X[:, 0]
+    pv_dc     = res_grid.X[:, 1]
+    eb_ac     = res_grid.X[:, 2]
+    eb_dc     = res_grid.X[:, 3]
+    charger_ac = res_grid.X[:, 4]
+    charger_dc = res_grid.X[:, 5]
     print(f1)
     print(f2)
     print(f3)
@@ -632,7 +632,7 @@ def run_OG_optimization():
         "Charger_AC 容量 (kW)": charger_ac,
         "Charger_DC 容量 (kW)": charger_dc
     })
-    # pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc = res.X[choice]
+    # pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc = res_grid.X[choice]
     # 设置本地保存路径
     local_path = r"C:\Users\86183\Desktop\111"
     os.makedirs(local_path, exist_ok=True)
@@ -644,10 +644,10 @@ def run_OG_optimization():
     grid_result_path
 
     # 显示已有方案数量
-    num_solutions = len(res.X)
+    num_solutions = len(res_grid.X)
     print(f"共找到 {num_solutions} 个优化方案。")
 
-    return res, num_solutions
+    return res_grid, num_solutions
 
 # while True: 这个指令交给用户决定
 # ============================================
@@ -682,7 +682,7 @@ def show_OG_selected_solution(num_solutions):
     choice = int(choice) - 1
 
     # 取用户选的方案
-    pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc = res.X[choice]
+    pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc = res_grid.X[choice]
 
     print("===== 你选择的方案容量配置 =====")
     print(f"光伏AC容量: {pv_ac:.2f} kW")
@@ -1070,7 +1070,7 @@ def show_OG_selected_solution(num_solutions):
     OG_flag = input("\n是否选定该方案？(1=是, 0=否, 请输入1或0): ")
     if OG_flag == "1":
         # 确认选定，跳出选择循环，进入并网优化
-        pv_ac_selected, pv_dc_selected, eb_ac_selected, eb_dc_selected, charger_ac_selected, charger_dc_selected = res.X[choice]
+        pv_ac_selected, pv_dc_selected, eb_ac_selected, eb_dc_selected, charger_ac_selected, charger_dc_selected = res_grid.X[choice]
         charger_ac_selected = ceil_to_multiple(charger_ac_selected, 7)
         charger_dc_selected = ceil_to_multiple(charger_dc_selected, 120)
         print("\n===== 最终选定的容量配置 =====")
