@@ -15,14 +15,14 @@ b = 1  # 初始SOC的上限
 mu_c = [10.50, 19.00]  # 经过光储充园区时间的正态分布均值 (小时) 上午和下午
 sigma_c = [2.14, 3.14]  # 经过光储充园区时间的正态分布标准差 (小时) 上午和下午
 # P_che = [7, 60]  # 充电功率 (kW) 慢充和快充
-P_che = [60]
+P_che = [60]  # 充电功率 (kW) 只使用快充  ！！！！ 这个后续需要进行修改
 eta = 0.90  # 充电效率
-E_h = 80  # 电池总容量 (kWh)
+E_h = 80  # 电池总容量 (kWh) ！！！！  这个后续需要进行修改
 E_b = [20.54, 18.89, 20]  # 百公里电耗 (kWh/100km) 冬季、夏季和过渡季
 
 # 蒙特卡洛仿真次数和每次仿真中的EV数量
 M_c = 30
-N_c = 1500  #EV的数量，每次仿真中EV的为用户输入
+N_c = 1500  #EV的数量，每次仿真中EV的为用户输入  ！！！! 这个后续需要进行修改
 
 # 时间设置
 time_steps = np.arange(0, 24, 0.01)  # 时间步长为0.1小时
@@ -32,6 +32,10 @@ print(num_time_steps)
 # 初始化总负荷矩阵
 total_load_matrix = np.zeros((M_c, num_time_steps))
 print(total_load_matrix)
+
+# 在初始化总负荷矩阵之后，再建一个并发数量矩阵：
+total_num_matrix = np.zeros((M_c, num_time_steps))   # shape:(30, 2400)
+
 
 # 蒙特卡洛仿真
 for j in range(M_c):
@@ -68,30 +72,70 @@ for j in range(M_c):
 
     # 累计本次仿真的总负荷
     total_load_matrix[j, :] = np.sum(P_EV_matrix, axis=0)
-
+    total_num_matrix[j, :]  = (P_EV_matrix > 0).sum(axis=0)   # NEW ▶
 # 计算平均负荷曲线
 average_load_curve = np.mean(total_load_matrix, axis=0)
+average_num_curve  = total_num_matrix.mean(axis=0)            # NEW ▶
 
-# 绘制典型日负荷曲线
-plt.figure(figsize=(10, 6))
-plt.plot(time_steps, average_load_curve, label='Average Load Curve (kW)')
-plt.xlabel('Time (hours)')
-plt.ylabel('Load (kW)')
-plt.title('Typical Daily Load Curve of EV Charging')
-plt.legend()
-plt.grid(True)
-plt.show()
+# ───── 车流量峰值统计 ─────
+peak_num = int(average_num_curve.max())                      # NEW ▶
+peak_time_idx = average_num_curve.argmax()                   # NEW ▶
+peak_time = time_steps[peak_time_idx]                    # NEW ▶
 
-# 将数据导出为CSV
-# 创建DataFrame
-time_steps_df = pd.DataFrame(time_steps, columns=["Time (hours)"])
-average_load_df = pd.DataFrame(average_load_curve, columns=["Average Load (kW)"])
-total_load_matrix_df = pd.DataFrame(total_load_matrix.T, columns=[f"Simulation {i+1}" for i in range(M_c)])
+# # 绘制典型日负荷曲线
+# plt.figure(figsize=(10, 6))
+# plt.plot(time_steps, average_load_curve, label='Average Load Curve (kW)')
+# plt.xlabel('Time (hours)')
+# plt.ylabel('Load (kW)')
+# plt.title('Typical Daily Load Curve of EV Charging')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 
-# 合并数据
-combined_df = pd.concat([time_steps_df, average_load_df, total_load_matrix_df], axis=1)
+# # 将数据导出为CSV
+# # 创建DataFrame
+# time_steps_df = pd.DataFrame(time_steps, columns=["Time (hours)"])
+# average_load_df = pd.DataFrame(average_load_curve, columns=["Average Load (kW)"])
+# total_load_matrix_df = pd.DataFrame(total_load_matrix.T, columns=[f"Simulation {i+1}" for i in range(M_c)])
 
-# 导出为CSV文件
-combined_df.to_csv("load_simulation_results.csv", index=False)
+# # 合并数据
+# combined_df = pd.concat([time_steps_df, average_load_df, total_load_matrix_df], axis=1)
 
-print("数据已成功导出到 load_simulation_results.csv 文件中。")
+# # 导出为CSV文件
+# combined_df.to_csv("load_simulation_results.csv", index=False)
+
+# print("数据已成功导出到 load_simulation_results.csv 文件中。")
+
+# ───── 绘图（两张独立图） ─────
+plt.figure(figsize=(10, 4))
+plt.plot(time_steps, average_load_curve, linewidth=2)
+plt.xlabel('Time (h)'); plt.ylabel('Average Load (kW)')
+plt.title('Typical Daily EV Charging Load')
+plt.grid(True, linestyle=':')
+plt.tight_layout(); plt.show()
+
+plt.figure(figsize=(10, 4))
+plt.plot(time_steps, average_num_curve, linewidth=2, linestyle='--', color='tab:orange')
+plt.xlabel('Time (h)'); plt.ylabel('Average #EVs Charging')
+plt.title('Typical Daily Concurrent EV Count')
+plt.grid(True, linestyle=':')
+plt.tight_layout(); plt.show()
+
+# ───── 导出两个 CSV ─────
+# ① 负荷数据
+df_time        = pd.DataFrame(time_steps, columns=['Time (h)'])
+df_avg_load    = pd.DataFrame(average_load_curve, columns=['Avg_Load_kW'])
+df_load_sims   = pd.DataFrame(total_load_matrix.T,
+                              columns=[f'Load_Sim_{i+1}' for i in range(M_c)])
+load_df        = pd.concat([df_time, df_avg_load, df_load_sims], axis=1)
+load_df.to_csv('load_results.csv', index=False)
+
+# ② 并发数量数据
+df_avg_num     = pd.DataFrame(average_num_curve, columns=['Avg_Num_EVs'])
+df_num_sims    = pd.DataFrame(total_num_matrix.T,
+                              columns=[f'Num_Sim_{i+1}' for i in range(M_c)])
+num_df         = pd.concat([df_time, df_avg_num, df_num_sims], axis=1)
+num_df.to_csv('num_results.csv', index=False)
+
+print('✅ 已分别导出：load_results.csv  和  num_results.csv')
+print(f'车流量峰值发生在 {peak_time:.2f} h ，同时有 {peak_num} 辆车在充电')   # NEW ▶
