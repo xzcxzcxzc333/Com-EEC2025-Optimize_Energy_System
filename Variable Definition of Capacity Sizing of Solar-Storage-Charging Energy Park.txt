@@ -1,0 +1,64 @@
+1. xu_user xl_user 决策变量上下限 (pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc kW kW kWh kWh kW kW)
+2. park_space 园区占地面积 m^2
+3. typical_day_avg_load 典型日园区负荷均值 kW
+   rand_amp
+   hourly_factor
+   random_variation
+   Park_Load_Flag # 园区负荷标志（0-代码生成，1-xlsx导入）
+   total_park_load_profile_year 典型日园区负荷数据 kW（尺度为1h*365）
+   ac_park_load_profile_year 交流园区负荷数据 kW（尺度为1h*365）
+   dc_park_load_profile_year 直流园区负荷数据 kW（尺度为1h*365）
+   ac_park_load_profile 交流园区负荷数据 kW（尺度为1h）
+   dc_park_load_profile 直流园区负荷数据 kW（尺度为1h）
+4. car_number 园区车辆保有量 辆
+5. num_chargers 充电桩数量 个
+6. ac_charger_power 交流充电桩功率 kW
+7. n_days 天数 天（365）
+   n_hours 小时数 小时（24*n_days）
+   hours 长度为n_hours的列表 [0, 1, ..., 23, 0, 1, ..., 23] 小时
+   Delta_t 时间间隔 小时（1）
+8. solar_data 光照数据 W/m^2
+   solar_irradiance 光照辐射强度 W/m^2 （前24行）
+   solar_irradiance_year 年度光照辐射强度 W/m^2 （*365）
+   solar_irrad_profile 归一化光照辐射强度 无量纲 (kW条件)
+9. car_flow_number 车辆流量 辆
+   car_flow_number_max 最大充电车辆数量 辆
+10. dc_charge_load_data 直流充电负荷数据 kW （尺度为1/100h）
+   dc_charge_load_profile_raw 直流充电负荷数据 * 原本用来/10进行平衡的量，后面可以考虑删除
+   sub_steps_per_hour 子步长 中间变量 用于处理1/100
+   dc_charge_load_profile 直流充电负荷数据 kW（尺度为1h）
+   dc_charge_load_profile_year 年度直流充电负荷数据 kW（尺度为1h*365）
+   max_dc_charge_load 最大直流充电负荷 kW
+11. ac_charge_load_profile_year 交流充电负荷数据 kW（尺度为1h*365）
+    ac_charge_load_profile 交流充电负荷数据 kW（尺度为1h）
+12. dc_load_total 直流负荷总和 kW（尺度为1h）
+    ac_load_total 交流负荷总和 kW（尺度为1h）
+    load_total 园区负荷总和 kW（尺度为1h）
+    dc_pv_caculated_load 直流每日总负荷（离网条件用于配置光伏容量）
+    ac_pv_caculated_load 交流每日总负荷（离网条件用于配置光伏容量）
+    solar_irrad_profile_caculated_load 光照辐射强度总负荷（离网条件用于配置光伏容量）
+13. electricity_sell_price   # 元/kWh 电网买电电价
+    electricity_buy_price   # 元/kWh 向电网卖电店家
+    charge_price   # 元/kWh
+    grid_co2_factor  # kg/kWh
+    # 储能充放电效率
+    eb_charge_eff 
+    eb_discharge_eff  
+    # 各模块单价
+    AC_PV_system_unit_price  
+    DC_PV_system_unit_price  
+    #光伏系统（AC和DC光伏）单价
+    AC_Energy_storage_system_unit_price  
+    DC_Energy_storage_system_unit_price  
+    #储能系统（AC和DC电池）单价 
+    AC_EV_charger_unit_price  # 7kW约需要3k 
+    DC_EV_charger_unit_price  # 120kW约需要5w
+    #充电桩（AC和DC充电桩）单价 
+    #年运维成本的比例
+    annual_maintenance_rate 
+    # 定义储能最大充/放电功率限制（这里假定为额定容量的1倍，你可根据实际需求调整比例）
+    charge_rate_ratio 
+    discharge_rate_ratio 
+    # 直流侧和交流侧之间的转换效率
+    DC_to_AC_conversion_efficiency 
+    AC_to_DC_conversion_efficiency 
