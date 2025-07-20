@@ -602,7 +602,7 @@ def run_OG_optimization():
 # while True: 这个指令交给用户决定 确定时OG_flag = True
 # ============================================
 # function3: 显示用户选定的方案      
-def show_OG_selected_solution(num_solutions,OG_flag):    
+def show_OG_selected_solution(num_solutions):    
     global xl_user, xu_user, park_space, car_number
     global Delta_t
     global electricity_buy_price, electricity_sell_price, charge_price, grid_co2_factor
@@ -891,7 +891,7 @@ def show_OG_selected_solution(num_solutions,OG_flag):
     df_ac_storage.to_excel(local_paths["AC_Storage"], index=False)
     df_ac_load.to_excel(local_paths["AC_Load"], index=False)
 
-    OG_flag = input("\n是否选定该方案？(1=是, 0=否, 请输入1或0): ")
+    OG_flag =  "1"
     if OG_flag == "1":
         # 确认选定，跳出选择循环，进入并网优化
         pv_ac_selected, pv_dc_selected, eb_ac_selected, eb_dc_selected, charger_ac_selected, charger_dc_selected = res_grid.X[choice]
@@ -959,9 +959,9 @@ def main():
 
     # Step 2: 运行离网优化，得到解集和数量
     num_solutions = run_OG_optimization()
-    OG_flag = 1
+
     # Step 3: 让用户选择方案并展示结果
-    show_OG_selected_solution(num_solutions,OG_flag)
+    show_OG_selected_solution(num_solutions)
 
 if __name__ == "__main__":
     main()

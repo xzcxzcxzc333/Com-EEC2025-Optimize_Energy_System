@@ -96,6 +96,8 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
             max_dc_discharge_power = eb_dc * discharge_rate_ratio
             pv_power_ac = pv_ac * solar_irrad_profile   #pv_ac kW solar_irrad_profile 无量纲 pv_power_ac kW
             pv_power_dc = pv_dc * solar_irrad_profile   
+            ac_load_total = ac_charge_load_profile+ac_park_load_profile   #定义的是一天的量
+            dc_load_total = dc_charge_load_profile+dc_park_load_profile   #定义的是一天的量
             #额定容量 × 归一化光照强度
             soc_ac = eb_ac / 2
             soc_dc = eb_dc / 2
@@ -858,7 +860,7 @@ def run_GC_optimization():
 # while True: 这个指令交给用户决定
 # ============================================
 # function3: 显示用户选定的方案  
-def show_GC_selected_solution(num_solutions):    
+def show_GC_selected_solution(num_solutions,GC_flag):    
     global xl_user, xu_user, park_space, car_number
     global Delta_t
     global electricity_buy_price, electricity_sell_price, charge_price, grid_co2_factor
@@ -870,7 +872,7 @@ def show_GC_selected_solution(num_solutions):
     global charge_rate_ratio, discharge_rate_ratio
     global DC_to_AC_conversion_efficiency, AC_to_DC_conversion_efficiency
     global solar_irradiance, dc_charge_load_profile_raw
-    global OG_flag, GC_flag
+    global OG_flag
     global solar_irrad_profile, dc_charge_load_profile_year, dc_charge_load_profile, dc_park_load_profile
     global ac_charge_load_profile_year, ac_charge_load_profile , ac_park_load_profile
     global res, res_grid, n_hours, n_days
@@ -902,8 +904,8 @@ def show_GC_selected_solution(num_solutions):
     pv_power_ac = pv_ac * solar_irrad_profile   #pv_ac kW solar_irrad_profile 无量纲 pv_power_ac kW
     pv_power_dc = pv_dc * solar_irrad_profile   
     #额定容量 × 归一化光照强度
-    dc_load_total = dc_charge_load_profile_year+dc_park_load_profile   #dc_park_load_profile还需要进行定义
-    ac_load_total = ac_charge_load_profile_year+ac_park_load_profile   #ac_charge_load_profile ac_park_load_profile还需要进行定义
+    dc_load_total = dc_charge_load_profile+dc_park_load_profile   #dc_park_load_profile还需要进行定义
+    ac_load_total = ac_charge_load_profile+ac_park_load_profile   #ac_charge_load_profile ac_park_load_profile还需要进行定义
     load_total=ac_load_total+dc_load_total
     # 初始化储能SOC数组（每小时）
     soc_ac_array = np.zeros(n_hours)
@@ -1439,3 +1441,16 @@ def show_GC_selected_solution(num_solutions):
         return
     
 
+def main():
+    # Step 1: 预处理输入参数（生成负荷、光照等数据）
+    typical_day_avg_load=800
+    preprocess_inputs(typical_day_avg_load)
+
+    # Step 2: 运行并网优化，得到解集和数量
+    num_solutions = run_GC_optimization()
+    GC_flag = "1"
+    # Step 3: 让用户选择方案并展示结果
+    show_GC_selected_solution(num_solutions,GC_flag)
+
+if __name__ == "__main__":
+    main()
