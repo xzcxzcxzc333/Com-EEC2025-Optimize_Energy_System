@@ -5,7 +5,7 @@ from IPython.display import Image
 import pandas as pd
 
 # 使用本地文件路径显示图片
-Image(filename='E:\\大学竞赛\\2025高校电气电子创新竞赛\\园区车辆负荷预测参数.png', width=400)
+# Image(filename='E:\\大学竞赛\\2025高校电气电子创新竞赛\\园区车辆负荷预测参数.png', width=400)
 
 # 参数设置
 mu_l = 3.2  # 行驶里程m的对数正态分布的均值
