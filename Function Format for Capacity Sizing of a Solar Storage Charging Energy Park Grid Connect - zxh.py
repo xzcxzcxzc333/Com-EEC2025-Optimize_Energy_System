@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import sys
-import importlib.util
 import matplotlib.pyplot as plt
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
@@ -144,7 +142,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                 current_sell_price = electricity_sell_price * price_factor
                 current_buy_price = electricity_buy_price * price_factor
 
-                print(f"time[{t}]")
                 pv_total_ac = pv_power_ac[t]
                 pv_total_dc = pv_power_dc[t]
                 load_dc = dc_load_total[t]
@@ -189,7 +186,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                             release = min(load_dc / eb_discharge_eff, max_release)
                             flag_max_dc_discharge_power -= release
                             soc_dc -= release * Delta_t
-                            print(f"time[{t}-1]:soc_dc {soc_dc}")
                             load_dc -= release * eb_discharge_eff
 
                     if load_ac > 0:
@@ -198,7 +194,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                             release = min(load_ac / eb_discharge_eff, max_release)
                             flag_max_ac_discharge_power -= release
                             soc_ac -= release * Delta_t
-                            print(f"time[{t}-1]:soc_ac {soc_ac}")
                             load_ac -= release * eb_discharge_eff
 
                     # ========== 电池放电供另一侧负荷 ==========
@@ -208,7 +203,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                             release = min(load_dc / eb_discharge_eff, max_release*AC_to_DC_conversion_efficiency)
                             flag_max_ac_discharge_power -= release/AC_to_DC_conversion_efficiency
                             soc_ac -= release/AC_to_DC_conversion_efficiency * Delta_t
-                            print(f"time[{t}-2]:soc_ac {soc_ac}")
                             load_dc -= release * eb_discharge_eff
 
                     if load_ac > 0:
@@ -217,7 +211,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                             release = min(load_ac / eb_discharge_eff, max_release*DC_to_AC_conversion_efficiency)
                             flag_max_dc_discharge_power -= release/DC_to_AC_conversion_efficiency
                             soc_dc -= release/DC_to_AC_conversion_efficiency * Delta_t
-                            print(f"time[{t}-2]:soc_dc {soc_dc}")
                             load_ac -= release * eb_discharge_eff
 
 
@@ -236,7 +229,6 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
                         flag_max_dc_charge_power = max_dc_charge_power + max_dc_discharge_power - flag_max_dc_charge_power
                         # AC储能充电
                         if soc_ac < 0.9 * eb_ac and flag_max_ac_charge_power > 0:
-                            print("AC储能充电")
                             available_pv_power = min(pv_total_ac, flag_max_ac_charge_power)
                             delta_energy_pv = min((0.9*eb_ac - soc_ac), available_pv_power * eb_charge_eff * Delta_t)
                             flag_max_ac_charge_power -= delta_energy_pv/eb_charge_eff
@@ -413,10 +405,8 @@ class MicrogridOptimization_2(Problem): #定义一个新的类 MicrogridOptimiza
             revenue = np.sum(dc_charge_load_profile) * charge_price * n_days
             #充电收入 充电服务收费标准 = 0.7 元/kWh
             total_cost = investment_cost + maintenance_cost + electricity_cost - revenue  #这个指标低比较好
-            print(f"investment_cost={investment_cost}CNY\nmaintenance_cost={maintenance_cost}CNY\nrevenue={revenue}CNY\ntotal_cost={total_cost}CNY")
             #年化总成本
             co2_emission = (sum(pv_power_ac)+sum(pv_power_dc)-grid_energy_buy) * grid_co2_factor * n_days
-            print(f"pv_utilization_1={total_pv_used/total_pv_generated:.4f}  pv_utilization_2={1-total_pv_wasted/total_pv_generated:.4f}")
             pv_utilization = 1-total_pv_wasted/total_pv_generated if total_pv_generated > 0 else 0
 
             # if pv_utilization <= 1 and pv_utilization >= 0.9:
@@ -470,12 +460,10 @@ def preprocess_inputs(typical_day_avg_load, signals=None):
     if xu_user[0]+xu_user[1] > park_space*0.3*175/1000: #后续应该修改 
         xu_user[0]=park_space*0.3*175/2000
         xu_user[1]=park_space*0.3*175/2000  #光伏功率上限（园区限制）
-        print(f"交流侧和直流侧光伏上限修改为(kW kW):{xu_user[0]}、{xu_user[1]}")
 
     if xl_user[0]+xl_user[1] > park_space*0.3*175/1000:
         xl_user[0]=park_space*0.3*175/4000
         xl_user[1]=park_space*0.3*175/4000  #光伏功率下限（自定义，可以考虑修改）
-        print(f"交流侧和直流侧光伏下限修改为(kW kW):{xl_user[0]}、{xl_user[1]}")
         
     # 用户输入：典型日园区负荷均值 (单位：kW) 根据《城市电力规划规范》（GB/T50293-1999），工业用地用电指标为200-800kW/公顷。240000平方米的园区面积为24公顷，按照最低值200kW/公顷计算，负荷功率为4800kW；按照最高值800kW/公顷计算，负荷功率为19200kW。
     # typical_day_avg_load = float(input("请输入典型日园区平均每小时负荷 (kW): \n根据《城市电力规划规范》（GB/T50293-1999），工业用地用电指标为200-800kW/公顷。240000平方米的园区面积为24公顷，按照最低值200kW/公顷计算，负荷功率为4800kW；按照最高值800kW/公顷计算，负荷功率为19200kW\n"))
@@ -484,18 +472,12 @@ def preprocess_inputs(typical_day_avg_load, signals=None):
     # car_number = int(input("请输入园区车辆保有量(辆): \n工业厂房根据标准每100平方米建筑面积配建0.2个车位，对于一个占地面积为240000平方米的园区，假设容积率为1.5，则总建筑面积为360000平方米，车辆保有量约为720个车位\n"))
     num_chargers = car_number // 10
     ac_charger_power = 7  # 单位kW
-    print(f"交流充电桩（慢充）数量为(辆):{num_chargers}，充电功率为(kW)：{ac_charger_power}")
 
     if xl_user[4] >  num_chargers*ac_charger_power:
         xl_user[4]=num_chargers*ac_charger_power*6/7
-        print(f"交流侧充电桩下限修改为(kW):{xl_user[4]}")
 
     if xu_user[4] >  num_chargers*ac_charger_power*10/7:
         xu_user[4]=num_chargers*ac_charger_power*10/7
-        print(f"交流侧充电桩上限修改为(kW):{xu_user[4]}")
-
-    print(f"xl_user:{xl_user}")
-    print(f"xu_user:{xu_user}")
 
     # ============================================
     # Step2: 从CSV&XLSX文件读入光照、车流量数据
@@ -512,7 +494,6 @@ def preprocess_inputs(typical_day_avg_load, signals=None):
     # 归一化处理（假设1000W/m²为标准最大值） 额定功率STC标准下即在1000W/m2 长度为一天
     solar_irrad_profile = solar_irradiance / 1000.0
 
-    print("solar_irradiance.shape =", solar_irradiance.shape)
     # 读取直流充电负荷功率数据（每0.01h一个点）
     # dc_charge_load_data = pd.read_excel('Car_flow_data.xlsx')
     # dc_charge_load_profile_raw = dc_charge_load_data.iloc[:, 1].values
@@ -601,46 +582,18 @@ def preprocess_inputs(typical_day_avg_load, signals=None):
     ac_load_total = ac_charge_load_profile+ac_park_load_profile   #定义的是一天的量
     load_total = ac_load_total+dc_load_total   #定义的是一天的量
     #总的负荷功率需求，直接取之前处理好的逐小时负荷
-    print(f"load_total_len: {len(load_total)}")  # 打印负荷总功率需求
-    print(f"dc_load_total_len: {len(dc_load_total)}")  # 打印负荷总功率需求
-    print(f"ac_load_total_len: {len(ac_load_total)}")  # 打印负荷总功率需求
     dc_pv_caculated_load = sum(dc_load_total)  # 计算总负荷功率需求
     ac_pv_caculated_load = sum(ac_load_total)  # 计算总负荷功率需求
-    solar_irrad_profile_caculated_load = sum(solar_irrad_profile[:24])  # 取前24小时的光照数据
-    print(f"直流侧光伏负荷功率需求(kW): {dc_pv_caculated_load:.2f}")
-    print(f"交流侧光伏负荷功率需求(kW): {ac_pv_caculated_load:.2f}")
-    print(f"光照数据归一化后负荷功率需求: {solar_irrad_profile_caculated_load:.2f}")
-    xl_user[0] = ac_pv_caculated_load * 0.70 /solar_irrad_profile_caculated_load
-    xl_user[1] = dc_pv_caculated_load * 0.70 /solar_irrad_profile_caculated_load
-    xu_user[0] = ac_pv_caculated_load * 1.30 /solar_irrad_profile_caculated_load
-    xu_user[1] = dc_pv_caculated_load * 1.30 /solar_irrad_profile_caculated_load
-    print(f"交流侧和直流侧光伏下限修改为(kW kW):{xl_user[0]}、{xl_user[1]}")
-    print(f"交流侧和直流侧光伏上限修改为(kW kW):{xu_user[0]}、{xu_user[1]}")
-    xl_user[2] = ac_pv_caculated_load * 0.7 /solar_irrad_profile_caculated_load
-    xl_user[3] = dc_pv_caculated_load * 0.7 /solar_irrad_profile_caculated_load
-    xu_user[2] = ac_pv_caculated_load * 3.5 /solar_irrad_profile_caculated_load
-    xu_user[3] = dc_pv_caculated_load * 3.5 /solar_irrad_profile_caculated_load
-    print(f"交流侧和直流侧储能下限修改为(kW kW):{xl_user[2]}、{xl_user[3]}")
-    print(f"交流侧和直流侧储能上限修改为(kW kW):{xu_user[2]}、{xu_user[3]}")
+    irrad_profile_load = sum(solar_irrad_profile[:24])  # 取前24小时的光照数据
+    xl_user[0] = ac_pv_caculated_load * 0.70 /irrad_profile_load
+    xl_user[1] = dc_pv_caculated_load * 0.70 /irrad_profile_load
+    xu_user[0] = ac_pv_caculated_load * 1.30 /irrad_profile_load
+    xu_user[1] = dc_pv_caculated_load * 1.30 /irrad_profile_load
+    xl_user[2] = ac_pv_caculated_load * 0.7 /irrad_profile_load
+    xl_user[3] = dc_pv_caculated_load * 0.7 /irrad_profile_load
+    xu_user[2] = ac_pv_caculated_load * 3.5 /irrad_profile_load
+    xu_user[3] = dc_pv_caculated_load * 3.5 /irrad_profile_load
 
-    # 打印光照数据和负荷数据的长度
-    print(f"光照数据长度: {len(solar_irrad_profile)}") #应该为24
-    print("光照数据（归一化后）:")
-    for i in range(len(solar_irrad_profile)):
-        print(f"第{i}小时: {solar_irrad_profile[i]:.6f}")
-
-    print(f"\n直流充电桩负荷数据长度: {len(dc_charge_load_profile)}") #应该为24
-    print("直流充电桩负荷数据（每小时平均负荷功率）:")
-    for i in range(len(dc_charge_load_profile)):
-        print(f"第{i}小时: {dc_charge_load_profile[i]:.6f} kW")
-
-    print(f"\n交流充电桩负荷数据长度: {len(ac_charge_load_profile)}") #应该为24
-    print("交流充电桩负荷数据（每小时平均负荷功率）:")
-    for i in range(len(ac_charge_load_profile)):
-        print(f"第{i}小时: {ac_charge_load_profile[i]:.6f} kW")
-
-    # 长度一致性检查
-    assert len(solar_irrad_profile) == len(dc_charge_load_profile), "光照数据和直流充电桩负荷数据长度不一致！"
 
     n_hours = len(solar_irrad_profile)  # 总小时数，比如24或8760
     hours = np.arange(n_hours)  # [0, 1, 2, ..., 23]
@@ -730,16 +683,6 @@ def run_GC_optimization():
         verbose=True
     )
 
-
-    # 输出前5个帕累托解 + 打印上下限范围
-    print("用户自定义的决策变量范围：")
-    print(f"光伏AC容量: {xl_user[0]} ~ {xu_user[0]} kW")
-    print(f"光伏DC容量: {xl_user[1]} ~ {xu_user[1]} kW")
-    print(f"储能AC容量: {xl_user[2]} ~ {xu_user[2]} kWh")
-    print(f"储能DC容量: {xl_user[3]} ~ {xu_user[3]} kWh")
-    print(f"充电桩AC容量: {xl_user[4]} ~ {xu_user[4]} kW")
-    print(f"充电桩DC容量: {xl_user[5]} ~ {xu_user[5]} kW")
-
     Scatter().add(res.F).show()
 
     #========== 评价指标构建（并网不上网状态） ==========
@@ -755,11 +698,6 @@ def run_GC_optimization():
     eb_dc     = res.X[:, 3]
     charger_ac = res.X[:, 4]
     charger_dc = res.X[:, 5]
-    print(f1)
-    print(f2)
-    print(f3)
-    print(len(f1), len(f2), len(f3))
-
 
     # fig.show()
     # 创建交互式2D散点图
@@ -852,7 +790,6 @@ def run_GC_optimization():
     # 显示已有方案数量
     num_solutions = len(res.X)
     print(f"共找到 {num_solutions} 个优化方案。")
-
     return num_solutions
 
 # while True: 这个指令交给用户决定
@@ -880,21 +817,12 @@ def show_GC_selected_solution(num_solutions):
     #choice_grid = input(f"请输入要查看的并网方案编号 (1-{num_solutions}): ")
     choice_grid = "1"  # 强制选择第1个方案（字符串形式）
     if not (choice_grid.isdigit() and 1 <= int(choice_grid) <= num_solutions):
-        print("输入无效，请重新输入。")
         return
     choice_grid = int(choice_grid) - 1
 
     # 取用户选的方案
     pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc = res.X[choice_grid]
 
-    print("===== 你选择的方案容量配置 =====")
-    print(f"光伏AC容量: {pv_ac:.2f} kW")
-    print(f"光伏DC容量: {pv_dc:.2f} kW")
-    print(f"储能AC容量: {eb_ac:.2f} kWh")
-    print(f"储能DC容量: {eb_dc:.2f} kWh")
-    print(f"充电桩AC容量: {charger_ac:.2f} kW")
-    print(f"充电桩DC容量: {charger_dc:.2f} kW")
-    print("===============================")
     max_ac_charge_power = eb_ac * charge_rate_ratio
     max_dc_charge_power = eb_dc * charge_rate_ratio
     max_ac_discharge_power = eb_ac * discharge_rate_ratio
@@ -1190,14 +1118,11 @@ def show_GC_selected_solution(num_solutions):
             # 判断是否为最后3个小时
         else:
             if soc_ac< 0.5 * eb_ac and soc_dc < 0.5 * eb_dc:
-                print("1")
                 # 每小时给储能充10%额定容量
                 ac_charge_target = min(0.5 * eb_ac - soc_ac, max_ac_charge_power)
                 dc_charge_target = min(0.5 * eb_dc - soc_dc, max_dc_charge_power)
-                print(f"dc_charge_target={dc_charge_target} 0.5 * eb_dc - soc_ac={0.5 * eb_dc - soc_ac}  max_dc_charge_power={max_dc_charge_power}")
                 # AC储能充电
                 if ac_charge_target > 0:
-                    print("2")
                     soc_ac += ac_charge_target
                     grid_money_buy_hour += price_factor*ac_charge_target  / eb_charge_eff  # 买电充电
                     grid_money_hour += price_factor*ac_charge_target  / eb_charge_eff  # 买电充电
@@ -1205,7 +1130,6 @@ def show_GC_selected_solution(num_solutions):
                     grid_energy_hour += ac_charge_target  / eb_charge_eff  # 买电充电
                 # DC储能充电
                 if dc_charge_target > 0:
-                    print("3")
                     soc_dc += dc_charge_target 
                     grid_money_buy_hour += price_factor*dc_charge_target  / (eb_charge_eff * AC_to_DC_conversion_efficiency)  # 买电充电
                     grid_money_hour += price_factor*dc_charge_target  / (eb_charge_eff * AC_to_DC_conversion_efficiency)  # 买电充电
@@ -1234,92 +1158,19 @@ def show_GC_selected_solution(num_solutions):
     total_cost = investment_cost + maintenance_cost + electricity_cost - revenue
 
     co2_emission = (sum(pv_power_ac)+sum(pv_power_dc)-grid_energy_buy) * grid_co2_factor * n_days
-    print(f"经济成本：total_cost={total_cost}CNY\n")
-    print(f"节省的碳排放量：total_cost={co2_emission}kg\n")
     # 绘图
     time_hours = np.arange(n_hours)
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, soc_ac_array, label='SOC AC Battery (kWh)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('State of Charge (kWh)')
-    plt.title('SOC of AC Battery Over Time')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, soc_dc_array, label='SOC DC Battery (kWh)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('State of Charge (kWh)')
-    plt.title('SOC of DC Battery Over Time')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, pv_power_ac, label='PV AC Power (kW)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('Power (kW)')
-    plt.title('PV AC Power Profile')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, pv_power_dc, label='PV DC Power (kW)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('Power (kW)')
-    plt.title('PV DC Power Profile')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
 
     ac_load_24 = ac_load_total[:24]
     dc_load_24 = dc_load_total[:24]
     grid_energy_24 = grid_energy_profile[:24]
     # 画图时用 ac_load_24 和 dc_load_24
 
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, ac_load_24, label='AC Load (kW)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('Load Power (kW)')
-    plt.title('AC Load Power Profile')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, dc_load_24, label='DC Load (kW)')
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('Load Power (kW)')
-    plt.title('DC Load Power Profile')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(time_hours, grid_energy_24, label='Grid Energy (kW)') # 每小时电网买卖功率，买电为正，卖电为负
-    plt.xticks(time_hours)  # 设置横坐标显示所有小时数
-    plt.xlabel('Hour')
-    plt.ylabel('Grid Power (kW)')
-    plt.title('Grid Energy Profile')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
     # 本地保存路径
-    local_path = os.path.join(os.getcwd(), 'output_data')
+    local_base_path = r"C:\Users\86183\Desktop\111"
 
     # 创建路径（如果不存在）
-    os.makedirs(local_path, exist_ok=True)
+    os.makedirs(local_base_path, exist_ok=True)
 
     # === 直流侧 ===
     df_dc_pv = pd.DataFrame({
@@ -1354,12 +1205,12 @@ def show_GC_selected_solution(num_solutions):
     })
     # 保存路径列表
     local_paths = {
-        "DC_PV": os.path.join(local_path, "DC_PV_GC.xlsx"),
-        "DC_Storage": os.path.join(local_path, "DC_Storage_GC.xlsx"),
-        "DC_Load": os.path.join(local_path, "DC_Load_GC.xlsx"),
-        "AC_PV": os.path.join(local_path, "AC_PV_GC.xlsx"),
-        "AC_Storage": os.path.join(local_path, "AC_Storage_GC.xlsx"),
-        "AC_Load": os.path.join(local_path, "AC_Load_GC.xlsx"),
+        "DC_PV": os.path.join(local_base_path, "DC_PV_GC.xlsx"),
+        "DC_Storage": os.path.join(local_base_path, "DC_Storage_GC.xlsx"),
+        "DC_Load": os.path.join(local_base_path, "DC_Load_GC.xlsx"),
+        "AC_PV": os.path.join(local_base_path, "AC_PV_GC.xlsx"),
+        "AC_Storage": os.path.join(local_base_path, "AC_Storage_GC.xlsx"),
+        "AC_Load": os.path.join(local_base_path, "AC_Load_GC.xlsx"),
     }
 
     # 保存文件
@@ -1372,21 +1223,14 @@ def show_GC_selected_solution(num_solutions):
     df_ac_load.to_excel(local_paths["AC_Load"], index=False)
 
     GC_flag = input("确认选择此方案并结束程序？(1=是, 0=否): ")
-    if GC_flag == 1:
-        print("\n===== 最终选定的容量配置 =====")
-        print(f"光伏AC容量: {int(round(pv_ac, -1)):.0f} kW")  # 保留三位有效数字并转换为整数
-        print(f"光伏DC容量: {int(round(pv_dc, -1)):.0f} kW")
-        print(f"储能AC容量: {int(round(eb_ac, -1)):.0f} kWh")
-        print(f"储能DC容量: {int(round(eb_dc, -1)):.0f} kWh")
-        print(f"调整后的充电桩AC容量（7kW的倍数）: {charger_ac_selected}，充电桩AC数量：{int(charger_ac_selected/7)}")
-        print(f"调整后的充电桩DC容量（120kW的倍数）: {charger_dc_selected}，充电桩DC数量：{int(charger_dc_selected/120)}")   
+    if GC_flag == 1:   
         files = {
-            "DC_PV_GC": os.path.join(local_path, "DC_PV_GC.xlsx"),
-            "DC_Storage_GC": os.path.join(local_path, "DC_Storage_GC.xlsx"),
-            "DC_Load_GC": os.path.join(local_path, "DC_Load_GC.xlsx"),
-            "AC_PV_GC": os.path.join(local_path, "AC_PV_GC.xlsx"),
-            "AC_Storage_GC": os.path.join(local_path, "AC_Storage_GC.xlsx"),
-            "AC_Load_GC": os.path.join(local_path, "AC_Load_GC.xlsx"),
+            "DC_PV_GC": os.path.join(local_base_path, "DC_PV_GC.xlsx"),
+            "DC_Storage_GC": os.path.join(local_base_path, "DC_Storage_GC.xlsx"),
+            "DC_Load_GC": os.path.join(local_base_path, "DC_Load_GC.xlsx"),
+            "AC_PV_GC": os.path.join(local_base_path, "AC_PV_GC.xlsx"),
+            "AC_Storage_GC": os.path.join(local_base_path, "AC_Storage_GC.xlsx"),
+            "AC_Load_GC": os.path.join(local_base_path, "AC_Load_GC.xlsx"),
             # "Choice_GC": os.path.join(local_base_path, "Grid_Optimization_Results.xlsx")
         } 
         pv_ac_selected,pv_dc_selected,eb_ac_selected,eb_dc_selected,charger_ac_selected,charger_dc_selected = pv_ac, pv_dc, eb_ac, eb_dc, charger_ac, charger_dc           
@@ -1410,7 +1254,6 @@ def show_GC_selected_solution(num_solutions):
         df_ac_load.loc[len(df_ac_load)] = ["最终负荷部分充电桩方案", charger_ac_selected]
         df_dc_load.loc[len(df_dc_load)] = ["最终负荷部分充电桩方案", charger_dc_selected]
         # df_choice.loc[len(df_choice)] = ["并网选择方案", choice_grid+1]
-        # print(f"choice:{choice_grid+1}")
         # 保存修改
         df_ac_pv.to_excel(files["AC_PV_GC"], index=False)
         df_dc_pv.to_excel(files["DC_PV_GC"], index=False)
@@ -1420,7 +1263,7 @@ def show_GC_selected_solution(num_solutions):
         df_dc_load.to_excel(files["DC_Load_GC"], index=False)
         # df_choice.to_excel(files["Choice_GC"], index=False)
         # 设置路径
-        path = r'.\output_data\Offgrid_Pareto_Results_3D.xlsx'
+        path = r"C:\Users\86183\Desktop\111\Grid_Optimization_Results.xlsx"
 
         # 读取原始表格
         df = pd.read_excel(path)
@@ -1435,7 +1278,6 @@ def show_GC_selected_solution(num_solutions):
         GC_flag = 0
         return
     else:
-        print("重新选择并网方案...")
         return
     
 
