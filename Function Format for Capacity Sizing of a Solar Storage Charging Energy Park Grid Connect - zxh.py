@@ -1124,7 +1124,7 @@ def show_GC_selected_solution(num_solutions):
     # 画图时用 ac_load_24 和 dc_load_24
 
     # 本地保存路径
-    local_base_path = r"C:\Users\86183\Desktop\111"
+    local_base_path =  os.path.join(os.getcwd(), 'output_data')
 
     # 创建路径（如果不存在）
     os.makedirs(local_base_path, exist_ok=True)
@@ -1137,7 +1137,7 @@ def show_GC_selected_solution(num_solutions):
 
     df_dc_storage = pd.DataFrame({
         "Hour": time_hours,
-        "SOC_DC (kWh)": soc_dc_array
+        "Storage_DC (kWh)": soc_dc_array
     })
 
     df_dc_load = pd.DataFrame({
@@ -1153,7 +1153,7 @@ def show_GC_selected_solution(num_solutions):
 
     df_ac_storage = pd.DataFrame({
         "Hour": time_hours,
-        "SOC_AC (kWh)": soc_ac_array
+        "Storgae_AC (kWh)": soc_ac_array
     })
 
     df_ac_load = pd.DataFrame({
@@ -1221,7 +1221,7 @@ def show_GC_selected_solution(num_solutions):
         df_dc_load.to_excel(files["DC_Load_GC"], index=False)
         # df_choice.to_excel(files["Choice_GC"], index=False)
         # 设置路径
-        path = r"C:\Users\86183\Desktop\111\Grid_Optimization_Results.xlsx"
+        path = r".\output_data\Grid_Optimization_Results.xlsx"
 
         # 读取原始表格
         df = pd.read_excel(path)
@@ -1232,6 +1232,25 @@ def show_GC_selected_solution(num_solutions):
 
         # 保存回原文件
         df.to_excel(path, index=False)
+
+        df_ac_SOC = pd.DataFrame({
+            "Hour": time_hours,
+            "SOC_AC (%)": 100*soc_ac_array/final_eb_ac
+        })
+
+        df_dc_SOC = pd.DataFrame({
+            "Hour": time_hours,
+            "SOC_DC (%)": 100*soc_dc_array/final_eb_dc
+        })
+        # 保存路径列表
+        local_paths = {
+            "SOC_AC": os.path.join(local_base_path, "AC_SOC_GC.xlsx"),
+            "SOC_DC": os.path.join(local_base_path, "DC_SOC_GC.xlsx"),
+        }
+
+        # 保存文件
+        df_ac_SOC.to_excel(local_paths["SOC_AC"], index=False)
+        df_dc_SOC.to_excel(local_paths["SOC_DC"], index=False)
         #files
         GC_flag = 0
         return

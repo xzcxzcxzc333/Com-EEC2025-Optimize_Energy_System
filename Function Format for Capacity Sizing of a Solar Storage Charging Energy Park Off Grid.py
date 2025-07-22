@@ -978,7 +978,7 @@ def show_OG_selected_solution(num_solutions,OG_flag):
     plt.xticks(time_hours)  # 设置横坐标显示所有小时数
     plt.xlabel('Hour')
     plt.ylabel('State of Charge (kWh)')
-    plt.title('SOC of AC Battery Over Time')
+    plt.title('Storage of AC Battery Over Time')
     plt.ylim(0, xu_user[2])  # 设置纵轴范围
     plt.legend()
     plt.grid(True)
@@ -989,7 +989,7 @@ def show_OG_selected_solution(num_solutions,OG_flag):
     plt.xticks(time_hours)  # 设置横坐标显示所有小时数
     plt.xlabel('Hour')
     plt.ylabel('State of Charge (kWh)')
-    plt.title('SOC of DC Battery Over Time')
+    plt.title('Storage of DC Battery Over Time')
     plt.ylim(0, xu_user[3])  # 设置纵轴范围
     plt.legend()
     plt.grid(True)
@@ -1075,7 +1075,7 @@ def show_OG_selected_solution(num_solutions,OG_flag):
 
     df_dc_storage = pd.DataFrame({
         "Hour": time_hours,
-        "SOC_DC (kWh)": soc_dc_array
+        "Storage_DC (kWh)": soc_dc_array
     })
 
     df_dc_load = pd.DataFrame({
@@ -1091,7 +1091,7 @@ def show_OG_selected_solution(num_solutions,OG_flag):
 
     df_ac_storage = pd.DataFrame({
         "Hour": time_hours,
-        "SOC_AC (kWh)": soc_ac_array
+        "Storage_AC (kWh)": soc_ac_array
     })
 
     df_ac_load = pd.DataFrame({
@@ -1182,6 +1182,25 @@ def show_OG_selected_solution(num_solutions,OG_flag):
 
         # 保存回原文件
         df.to_excel(path, index=False)
+
+        df_ac_SOC = pd.DataFrame({
+            "Hour": time_hours,
+            "SOC_AC (%)": 100*soc_ac_array/eb_ac_selected
+        })
+
+        df_dc_SOC = pd.DataFrame({
+            "Hour": time_hours,
+            "SOC_DC (%)": 100*soc_dc_array/eb_dc_selected
+        })
+        # 保存路径列表
+        local_paths = {
+            "SOC_AC": os.path.join(local_path, "AC_SOC_OG.xlsx"),
+            "SOC_DC": os.path.join(local_path, "DC_SOC_OG.xlsx"),
+        }
+
+        # 保存文件
+        df_ac_SOC.to_excel(local_paths["SOC_AC"], index=False)
+        df_dc_SOC.to_excel(local_paths["SOC_DC"], index=False)
         #files         
         return
     else:
